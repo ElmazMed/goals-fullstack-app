@@ -14,6 +14,7 @@ const register = asyncHandler(async (req, res) => {
   const userExist = await User.findOne({ email });
 
   if (userExist) {
+    res.status(401);
     throw new Error("This user is already registred");
   }
   const salt = await bcrypt.genSalt(10);
@@ -22,7 +23,7 @@ const register = asyncHandler(async (req, res) => {
   const user = await User.create({ email, name, password: hashedPass });
 
   if (user) {
-    res.status(200).json({ id: user.id, name, email, token: token(user._id) });
+    res.status(200).json({ token: token(user._id), name: user.name });
   } else {
     res.status(400);
     throw new Error("Invalid user data");
@@ -32,22 +33,20 @@ const register = asyncHandler(async (req, res) => {
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
-  const comaprePass = await bcrypt.compare(password, user.password);
 
-  if (user && comaprePass) {
-    res
-      .status(200)
-      .json({ id: user.id, name: user.name, email, token: token(user._id) });
+  if (user && (await bcrypt.compare(password, user.password))) {
+    res.status(200).json({
+      name: user.name,
+      token: token(user._id),
+    });
   } else {
     res.status(400);
-    throw new Error("Invalid credentials");
+    throw new Error("Sorry we could not find your account!");
   }
 });
 
 const getData = asyncHandler(async (req, res) => {
-  const { _id, name, email } = await User.findById(req.user.id);
-
-  res.status(200).json({ _id, email, name });
+  res.status(200).json(req.user);
 });
 
 // GENERATE TOKEN

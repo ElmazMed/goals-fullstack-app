@@ -94,6 +94,11 @@ h3 {
   gap: 10px;
 }
 
+.goals-msg{
+  grid-column-start: 1;
+  grid-column-end: 3;
+}
+
 .goal {
   background-color: #f4f4f4;
   margin: 10px 0;

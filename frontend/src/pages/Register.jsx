@@ -1,22 +1,63 @@
 import { useState, useEffect } from "react";
 import { FaUser } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { register, reset } from "../features/AuthSlice";
+import Spinner from "../components/Spinner";
 
 function Register() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { user, isLoading, isSuccess, isError, message } = useSelector(
+    (state) => state.auth
+  );
+
+  useEffect(() => {
+    if (isSuccess || user) {
+      navigate("/");
+    }
+    if (isError) {
+      if (message === "Request failed with status code 401") {
+        setErrMsg("This user is already registred");
+      }
+    }
+    dispatch(reset());
+  }, [user, isError, isSuccess, message, dispatch, navigate]);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+
   const { name, email, password, confirmPassword } = formData;
+
+  const [errMsg, setErrMsg] = useState("");
+
   const onChange = (e) => {
     setFormData((prevState) => ({
       ...prevState,
-      [e.target.name]: [e.target.value],
+      [e.target.name]: e.target.value,
     }));
   };
 
-  const onSubmit = (e) => e.preventDefault();
+  const onSubmit = (e) => {
+    e.preventDefault();
+
+    if (!name || !email || !password || !confirmPassword) {
+      setErrMsg("All the fields required!");
+    } else if (password !== confirmPassword) {
+      setErrMsg("Password doesn't match!");
+    } else {
+      const userData = { name, email, password };
+      dispatch(register(userData));
+    }
+  };
+
+  if (isLoading) {
+    return <Spinner />;
+  }
 
   return (
     <>
@@ -29,6 +70,7 @@ function Register() {
 
       <section className="form">
         <form onSubmit={onSubmit}>
+          <p style={{ color: "crimson" }}>{errMsg}</p>
           <div className="form-group">
             <input
               type="text"
